@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fractional Ops Command Center — Working with Shiela</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet"/>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #eeecf8;
+      --white:    #ffffff;
+      --dark:     #1a1830;
+      --panel:    #f4f3fc;
+      --muted:    #6b7280;
+      --terra:    #c0634a;
+      --terra-bg: rgba(192,99,74,0.08);
+      --green:    #22c55e;
+      --green-bg: rgba(34,197,94,0.1);
+      --amber:    #f0b429;
+      --amber-bg: rgba(240,180,41,0.1);
+      --red:      #e53e3e;
+      --red-bg:   rgba(229,62,62,0.1);
+      --border:   rgba(0,0,0,0.07);
+      --shadow-sm: 0 2px 12px rgba(0,0,0,0.06);
+      --shadow:    0 4px 24px rgba(0,0,0,0.09);
+      --radius:   16px;
+      --radius-sm: 10px;
+    }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--dark);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ───────────────────────── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-brand {
+      font-family: 'Dancing Script', cursive;
+      font-size: 18px;
+      color: var(--dark);
+    }
+    .topbar-divider { width: 1px; height: 18px; background: var(--border); }
+    .topbar-title { font-size: 13px; font-weight: 500; color: var(--muted); }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-date { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; }
+    .ai-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--terra-bg);
+      border: 1px solid rgba(192,99,74,0.3);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px; font-weight: 500; color: var(--terra);
+      letter-spacing: 0.05em;
+    }
+    .ai-pill-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--terra);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+    .back-link {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .back-link:hover { color: var(--dark); border-color: rgba(0,0,0,0.2); }
+
+    /* ── LAYOUT ────────────────────────── */
+    .layout { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+    .sidebar {
+      width: 220px;
+      background: var(--white);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .main { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+    /* ── SIDEBAR ───────────────────────── */
+    .sidebar-section { margin-bottom: 28px; }
+    .sidebar-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(0,0,0,0.2);
+      padding: 0 18px; margin-bottom: 8px;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 18px; cursor: pointer;
+      transition: background 0.15s;
+      font-size: 13px; font-weight: 400; color: var(--muted);
+    }
+    .sidebar-item:hover { background: rgba(0,0,0,0.03); color: var(--dark); }
+    .sidebar-item.active { background: rgba(192,99,74,0.07); color: var(--dark); border-right: 2px solid var(--terra); }
+    .sidebar-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .sidebar-count {
+      margin-left: auto; font-size: 10px; font-weight: 600;
+      background: rgba(0,0,0,0.06); border-radius: 10px;
+      padding: 2px 7px; color: var(--muted);
+    }
+    .sidebar-count.alert { background: var(--red-bg); color: var(--red); }
+
+    /* ── AI INSIGHT BANNER ─────────────── */
+    .insight-banner {
+      display: flex; align-items: flex-start; gap: 14px;
+      background: var(--terra-bg);
+      border: 1px solid rgba(192,99,74,0.25);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .insight-icon {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--terra);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0; margin-top: 1px;
+    }
+    .insight-body { flex: 1; }
+    .insight-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--terra); margin-bottom: 4px;
+    }
+    .insight-text { font-size: 13px; font-weight: 400; color: rgba(26,24,48,0.8); line-height: 1.55; }
+    .insight-text strong { color: var(--dark); font-weight: 600; }
+    .insight-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .insight-btn {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 6px 14px; border-radius: var(--radius-sm); cursor: pointer;
+      border: none; transition: background 0.2s;
+    }
+    .insight-btn-primary { background: var(--terra); color: white; }
+    .insight-btn-primary:hover { background: #a8533c; }
+    .insight-btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .insight-btn-ghost:hover { background: rgba(0,0,0,0.05); color: var(--dark); }
+
+    /* ── SUMMARY STATS ─────────────────── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+      box-shadow: var(--shadow-sm);
+    }
+    .stat-label {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 28px; font-weight: 700;
+      line-height: 1; color: var(--dark); margin-bottom: 4px;
+    }
+    .stat-sub { font-size: 11px; color: var(--muted); }
+    .stat-card.highlight { border-color: rgba(192,99,74,0.3); background: var(--terra-bg); }
+    .stat-card.highlight .stat-value { color: var(--terra); }
+
+    /* ── CLIENT TABLE ──────────────────── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-title { font-size: 13px; font-weight: 700; color: var(--dark); letter-spacing: 0.04em; }
+    .section-actions { display: flex; gap: 8px; }
+    .tbl-btn {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--muted); border: 1px solid var(--border);
+      background: var(--white); padding: 5px 12px;
+      cursor: pointer; border-radius: var(--radius-sm);
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tbl-btn:hover { color: var(--dark); border-color: rgba(0,0,0,0.2); }
+    .tbl-btn.active { background: var(--terra); color: white; border-color: var(--terra); }
+
+    .client-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+    .client-table thead tr {
+      border-bottom: 1px solid var(--border);
+    }
+    .client-table th {
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(0,0,0,0.3);
+      padding: 0 14px 10px;
+      text-align: left; white-space: nowrap;
+    }
+    .client-table th:first-child { padding-left: 16px; }
+    .client-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .client-table tbody tr:hover { background: rgba(0,0,0,0.02); }
+    .client-table tbody tr.flagged { background: rgba(192,99,74,0.04); }
+    .client-table tbody tr.flagged:hover { background: rgba(192,99,74,0.07); }
+    .client-table td {
+      padding: 14px 14px;
+      font-size: 13px; vertical-align: middle;
+    }
+    .client-table td:first-child { padding-left: 16px; }
+
+    /* Health dot */
+    .health-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      display: inline-block; margin-right: 8px; flex-shrink: 0;
+      vertical-align: middle;
+    }
+    .client-name { font-weight: 600; color: var(--dark); }
+    .client-type { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Pipeline */
+    .pipeline {
+      display: flex; gap: 3px; align-items: center; width: 110px;
+    }
+    .pipe-seg {
+      flex: 1; height: 6px; border-radius: 2px;
+    }
+    .pipe-label { font-size: 10px; color: var(--muted); margin-left: 6px; white-space: nowrap; }
+
+    /* Score */
+    .score { font-size: 14px; font-weight: 700; }
+
+    /* Last contact */
+    .contact-date { font-size: 12px; color: var(--muted); }
+    .contact-date.overdue { color: var(--red); font-weight: 500; }
+    .contact-date.soon { color: var(--amber); }
+
+    /* Contract value */
+    .contract-val { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .contract-type { font-size: 10px; color: var(--muted); }
+
+    /* Risk flag */
+    .risk-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 3px;
+    }
+    .risk-none { background: transparent; color: transparent; }
+    .risk-low { background: var(--green-bg); color: var(--green); }
+    .risk-med { background: var(--amber-bg); color: var(--amber); }
+    .risk-high { background: var(--red-bg); color: var(--red); }
+
+    /* ── BOTTOM ROW ────────────────────── */
+    .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+
+    .panel-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+    }
+    .panel-card-title {
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 16px;
+    }
+    .task-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .task-item:last-child { border-bottom: none; }
+    .task-check {
+      width: 16px; height: 16px; border-radius: 4px;
+      border: 1.5px solid var(--border);
+      flex-shrink: 0; margin-top: 1px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: border-color 0.15s;
+    }
+    .task-check:hover { border-color: var(--terra); }
+    .task-check.done { background: var(--green); border-color: var(--green); }
+    .task-text { font-size: 13px; color: rgba(26,24,48,0.75); line-height: 1.45; flex: 1; }
+    .task-text.done { text-decoration: line-through; color: var(--muted); }
+    .task-client {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.06em;
+      color: var(--muted); margin-top: 2px;
+    }
+    .task-due {
+      font-size: 10px; color: var(--muted); white-space: nowrap;
+      padding-top: 2px; flex-shrink: 0;
+    }
+    .task-due.urgent { color: var(--red); font-weight: 600; }
+
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 4px;
+    }
+    .activity-text { font-size: 12px; color: rgba(26,24,48,0.65); line-height: 1.45; flex: 1; }
+    .activity-text strong { color: var(--dark); font-weight: 600; }
+    .activity-time { font-size: 10px; color: var(--muted); white-space: nowrap; padding-top: 2px; }
+
+    /* ── SAMPLE WATERMARK ──────────────── */
+    .sample-bar {
+      text-align: center;
+      padding: 8px;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .bottom-row { grid-template-columns: 1fr; }
+      .topbar-date { display: none; }
+      .main { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <svg width="32" height="32" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <circle cx="100" cy="100" r="93" fill="white" stroke="rgba(0,0,0,0.08)" stroke-width="4"/>
+        <text x="44" y="122" font-family="'Dancing Script', cursive" font-weight="700" font-size="72" fill="#1a1830" letter-spacing="-2">ws</text>
+        <circle cx="158" cy="116" r="9" fill="#c0634a"/>
+      </svg>
+      <span class="topbar-brand">working with shiela.</span>
+      <div class="topbar-divider"></div>
+      <span class="topbar-title">Fractional Ops Command Center</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="today-date"></span>
+      <div class="ai-pill">
+        <div class="ai-pill-dot"></div>
+        AI Active
+      </div>
+      <a href="index2.html" class="back-link">← Back to Site</a>
+    </div>
+  </div>
+
+  <!-- LAYOUT -->
+  <div class="layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Views</div>
+        <div class="sidebar-item active">
+          <div class="sidebar-dot" style="background:var(--dark);"></div>
+          All Clients
+          <span class="sidebar-count">5</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:var(--red);"></div>
+          At Risk
+          <span class="sidebar-count alert">1</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:var(--amber);"></div>
+          Needs Attention
+          <span class="sidebar-count">1</span>
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:var(--green);"></div>
+          On Track
+          <span class="sidebar-count">3</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Quick Actions</div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:rgba(0,0,0,0.15);"></div>
+          Log Contact
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:rgba(0,0,0,0.15);"></div>
+          Add Task
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:rgba(0,0,0,0.15);"></div>
+          Weekly Report
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">This Week</div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:var(--terra);"></div>
+          3 Follow-ups Due
+        </div>
+        <div class="sidebar-item">
+          <div class="sidebar-dot" style="background:var(--amber);"></div>
+          2 Deliverables
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- AI INSIGHT BANNER -->
+      <div class="insight-banner">
+        <div class="insight-icon">✦</div>
+        <div class="insight-body">
+          <div class="insight-label">AI Insight — Today's Priority</div>
+          <div class="insight-text">
+            <strong>Client C (Fintech Startup)</strong> has had no logged activity in 9 days and a deliverable is due in 2 days. Health score dropped from 82 to 61 this week. Recommend reaching out today to unblock before deadline.
+          </div>
+          <div class="insight-actions">
+            <button class="insight-btn insight-btn-primary">Draft Check-in Message</button>
+            <button class="insight-btn insight-btn-ghost">Dismiss</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS ROW -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Active Clients</div>
+          <div class="stat-value">5</div>
+          <div class="stat-sub">2 retainer · 3 project</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Retainer Value</div>
+          <div class="stat-value">$9,400</div>
+          <div class="stat-sub">Across all active contracts</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Tasks Due This Week</div>
+          <div class="stat-value">7</div>
+          <div class="stat-sub">3 completed · 4 open</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-label">Clients Needing Attention</div>
+          <div class="stat-value">2</div>
+          <div class="stat-sub">1 at risk · 1 overdue contact</div>
+        </div>
+      </div>
+
+      <!-- CLIENT TABLE -->
+      <div class="section-header">
+        <div class="section-title">Client Portfolio</div>
+        <div class="section-actions">
+          <button class="tbl-btn active">All</button>
+          <button class="tbl-btn">Retainer</button>
+          <button class="tbl-btn">Project</button>
+        </div>
+      </div>
+
+      <table class="client-table">
+        <thead>
+          <tr>
+            <th>Client</th>
+            <th>Project Pipeline</th>
+            <th>Health</th>
+            <th>Last Contact</th>
+            <th>Contract</th>
+            <th>Risk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <span class="health-dot" style="background:var(--green);"></span>
+              <span class="client-name">Client A</span>
+              <div class="client-type" style="padding-left:18px;">SaaS Startup · Retainer</div>
+            </td>
+            <td>
+              <div class="pipeline">
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.08);"></div>
+                <span class="pipe-label">3/4 phases</span>
+              </div>
+            </td>
+            <td><span class="score" style="color:var(--green);">94</span></td>
+            <td><span class="contact-date">2 days ago</span></td>
+            <td>
+              <div class="contract-val">$2,200/mo</div>
+              <div class="contract-type">Retainer</div>
+            </td>
+            <td><span class="risk-badge risk-low">Low</span></td>
+          </tr>
+          <tr>
+            <td>
+              <span class="health-dot" style="background:var(--green);"></span>
+              <span class="client-name">Client B</span>
+              <div class="client-type" style="padding-left:18px;">E-commerce Brand · Project</div>
+            </td>
+            <td>
+              <div class="pipeline">
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.08);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.08);"></div>
+                <span class="pipe-label">2/4 phases</span>
+              </div>
+            </td>
+            <td><span class="score" style="color:var(--green);">88</span></td>
+            <td><span class="contact-date">Yesterday</span></td>
+            <td>
+              <div class="contract-val">$3,500</div>
+              <div class="contract-type">Project</div>
+            </td>
+            <td><span class="risk-badge risk-none">—</span></td>
+          </tr>
+          <tr class="flagged">
+            <td>
+              <span class="health-dot" style="background:var(--red);"></span>
+              <span class="client-name">Client C</span>
+              <div class="client-type" style="padding-left:18px;">Fintech Startup · Retainer</div>
+            </td>
+            <td>
+              <div class="pipeline">
+                <div class="pipe-seg" style="background:var(--red);"></div>
+                <div class="pipe-seg" style="background:rgba(229,62,62,0.3);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.07);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.07);"></div>
+                <span class="pipe-label">1/4 phases</span>
+              </div>
+            </td>
+            <td><span class="score" style="color:var(--red);">61</span></td>
+            <td><span class="contact-date overdue">9 days ago</span></td>
+            <td>
+              <div class="contract-val">$2,800/mo</div>
+              <div class="contract-type">Retainer</div>
+            </td>
+            <td><span class="risk-badge risk-high">High</span></td>
+          </tr>
+          <tr>
+            <td>
+              <span class="health-dot" style="background:var(--amber);"></span>
+              <span class="client-name">Client D</span>
+              <div class="client-type" style="padding-left:18px;">Consulting Firm · Project</div>
+            </td>
+            <td>
+              <div class="pipeline">
+                <div class="pipe-seg" style="background:var(--amber);"></div>
+                <div class="pipe-seg" style="background:var(--amber);"></div>
+                <div class="pipe-seg" style="background:var(--amber);"></div>
+                <div class="pipe-seg" style="background:rgba(0,0,0,0.08);"></div>
+                <span class="pipe-label">3/4 phases</span>
+              </div>
+            </td>
+            <td><span class="score" style="color:var(--amber);">74</span></td>
+            <td><span class="contact-date soon">4 days ago</span></td>
+            <td>
+              <div class="contract-val">$4,200</div>
+              <div class="contract-type">Project</div>
+            </td>
+            <td><span class="risk-badge risk-med">Med</span></td>
+          </tr>
+          <tr>
+            <td>
+              <span class="health-dot" style="background:var(--green);"></span>
+              <span class="client-name">Client E</span>
+              <div class="client-type" style="padding-left:18px;">Agency · Retainer</div>
+            </td>
+            <td>
+              <div class="pipeline">
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <div class="pipe-seg" style="background:var(--green);"></div>
+                <span class="pipe-label">4/4 phases</span>
+              </div>
+            </td>
+            <td><span class="score" style="color:var(--green);">97</span></td>
+            <td><span class="contact-date">Today</span></td>
+            <td>
+              <div class="contract-val">$2,400/mo</div>
+              <div class="contract-type">Retainer</div>
+            </td>
+            <td><span class="risk-badge risk-low">Low</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- BOTTOM ROW -->
+      <div class="bottom-row">
+
+        <!-- Open Tasks -->
+        <div class="panel-card">
+          <div class="panel-card-title">Open Tasks This Week</div>
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done')"></div>
+            <div style="flex:1">
+              <div class="task-text">Send Q2 ops report to Client A</div>
+              <div class="task-client">Client A · SaaS Startup</div>
+            </div>
+            <div class="task-due urgent">Today</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done')"></div>
+            <div style="flex:1">
+              <div class="task-text">Follow up on blocked deliverable — Phase 2 sign-off</div>
+              <div class="task-client">Client C · Fintech Startup</div>
+            </div>
+            <div class="task-due urgent">Overdue</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check" onclick="this.classList.toggle('done')"></div>
+            <div style="flex:1">
+              <div class="task-text">Review and submit final SOP documentation</div>
+              <div class="task-client">Client B · E-commerce</div>
+            </div>
+            <div class="task-due">Thu</div>
+          </div>
+          <div class="task-item">
+            <div class="task-check done" onclick="this.classList.toggle('done')"></div>
+            <div style="flex:1">
+              <div class="task-text done">Onboarding call — new team member</div>
+              <div class="task-client">Client E · Agency</div>
+            </div>
+            <div class="task-due">Done</div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="panel-card">
+          <div class="panel-card-title">Recent Activity</div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--green);"></div>
+            <div class="activity-text"><strong>Client E</strong> — Weekly check-in completed. All deliverables on track for month-end.</div>
+            <div class="activity-time">Today, 9:14am</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--amber);"></div>
+            <div class="activity-text"><strong>AI Flag</strong> — Client C health score dropped 21 points. No activity logged in 9 days.</div>
+            <div class="activity-time">Today, 8:00am</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--green);"></div>
+            <div class="activity-text"><strong>Client B</strong> — Phase 2 deliverable submitted and approved by client.</div>
+            <div class="activity-time">Yesterday, 4:32pm</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:rgba(0,0,0,0.15);"></div>
+            <div class="activity-text"><strong>Client D</strong> — Contract extended for 30 days. Updated project timeline sent.</div>
+            <div class="activity-time">Mon, 11:05am</div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:var(--green);"></div>
+            <div class="activity-text"><strong>Client A</strong> — Monthly ops review completed. Exec brief delivered 1 day early.</div>
+            <div class="activity-time">Mon, 9:50am</div>
+          </div>
+        </div>
+
+      </div><!-- /bottom-row -->
+    </main>
+  </div><!-- /layout -->
+
+  <!-- SAMPLE WATERMARK -->
+  <div class="sample-bar" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+    <svg width="18" height="18" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="93" fill="white" stroke="rgba(192,99,74,0.4)" stroke-width="5"/>
+      <text x="44" y="122" font-family="'Dancing Script', cursive" font-weight="700" font-size="72" fill="rgba(192,99,74,0.7)" letter-spacing="-2">ws</text>
+      <circle cx="158" cy="116" r="9" fill="#c0634a"/>
+    </svg>
+    Sample Work — Working with Shiela · workingwithshiela.com
+  </div>
+
+  <script>
+    // Set today's date in topbar
+    const d = new Date();
+    const opts = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('today-date').textContent = d.toLocaleDateString('en-US', opts);
+
+    // Sidebar filter interaction
+    document.querySelectorAll('.sidebar-item').forEach(item => {
+      item.addEventListener('click', function() {
+        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Table filter buttons
+    document.querySelectorAll('.tbl-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tbl-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Dismiss insight banner
+    document.querySelector('.insight-btn-ghost').addEventListener('click', function() {
+      document.querySelector('.insight-banner').style.opacity = '0.3';
+      document.querySelector('.insight-banner').style.pointerEvents = 'none';
+    });
+  </script>
+</body>
+</html>
